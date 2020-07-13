@@ -124,6 +124,7 @@ def run(tickers, market_open_dt, market_close_dt):
     minute_history = get_1000m_history_data(symbols)
 
     portfolio_value = float(api.get_account().portfolio_value)
+    print(f"Starting with {portfolio_value} in the bank.")
 
     open_orders = {}
     positions = {}
@@ -168,6 +169,7 @@ def run(tickers, market_open_dt, market_close_dt):
                 partial_fills[symbol] = qty
                 positions[symbol] += qty
                 open_orders[symbol] = data.order
+                print(f"partial fill of {symbol}")
             elif event == "fill":
                 qty = int(data.order["filled_qty"])
                 if data.order["side"] == "sell":
@@ -178,9 +180,11 @@ def run(tickers, market_open_dt, market_close_dt):
                 partial_fills[symbol] = 0
                 positions[symbol] += qty
                 open_orders[symbol] = None
+                rint(f"fill of {symbol}")
             elif event == "canceled" or event == "rejected":
                 partial_fills[symbol] = 0
                 open_orders[symbol] = None
+                print(f"{symbol} cancelled or rejected.")
 
     # Replace aggregated 1s bars with incoming 1m bars
     @conn.on(r"AM$")
@@ -346,6 +350,8 @@ def run(tickers, market_open_dt, market_close_dt):
             if len(symbols) <= 0:
                 conn.close()
             conn.deregister(["AM.{}".format(symbol)])
+
+        print("still listening...")
 
     channels = ["trade_updates"]
     for symbol in symbols:
