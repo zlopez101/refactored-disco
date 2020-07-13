@@ -2,5 +2,4 @@ venv
 *.ipynb_checkpoints
 *.ipynb_checkpoints
 .vscode
-*.txt
 *.pyc
