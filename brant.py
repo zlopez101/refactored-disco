@@ -19,7 +19,7 @@ session = requests.session()
 
 # We only consider stocks with per-share prices inside this range
 min_share_price = 1.0
-max_share_price = 1000
+max_share_price = 10
 # Minimum previous-day dollar volume for a stock we might consider
 min_last_dv = 1000000
 # Stop limit to default to
@@ -361,6 +361,8 @@ def run_ws(conn, channels):
         conn.run(channels)
     except Exception as e:
         print(e)
+        if e == asyncio.exceptions.CancelledError:
+            run_ws(conn, channels)
         conn.close()
         run_ws(conn, channels)
 
@@ -383,8 +385,9 @@ if __name__ == "__main__":
     # Wait until just before we might want to trade
     current_dt = datetime.today().astimezone(nyc)
     since_market_open = current_dt - market_open
+    """
     while since_market_open.seconds // 60 <= 14:
         time.sleep(1)
         since_market_open = current_dt - market_open
-
+    """
     run(get_tickers(), market_open, market_close)
