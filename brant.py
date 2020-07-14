@@ -71,7 +71,7 @@ def get_tickers():
         and asset.shortable
     ]
     dct = {}
-    for symbol in symbols:
+    for symbol in symbols[:10]:
         try:
             data = api.polygon.daily_open_close(symbol, "2020-07-10")
             if (
@@ -180,7 +180,7 @@ def run(tickers, market_open_dt, market_close_dt):
                 partial_fills[symbol] = 0
                 positions[symbol] += qty
                 open_orders[symbol] = None
-                rint(f"fill of {symbol}")
+                print(f"fill of {symbol}")
             elif event == "canceled" or event == "rejected":
                 partial_fills[symbol] = 0
                 open_orders[symbol] = None
