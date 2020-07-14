@@ -1,4 +1,5 @@
 import os
+import asyncio
 import alpaca_trade_api as tradeapi
 import requests
 import time
@@ -71,9 +72,9 @@ def get_tickers():
         and asset.shortable
     ]
     dct = {}
-    for symbol in symbols[:10]:
+    for symbol in symbols:
         try:
-            data = api.polygon.daily_open_close(symbol, "2020-07-10")
+            data = api.polygon.daily_open_close(symbol, "2020-07-13")
             if (
                 data.close >= min_share_price
                 and data.close <= max_share_price
@@ -241,9 +242,9 @@ def run(tickers, market_open_dt, market_close_dt):
             # Get the change since yesterday's market close
             daily_pct_change = (data.close - prev_closes[symbol]) / prev_closes[symbol]
             if (
-                daily_pct_change > 0.04
+                daily_pct_change > 0.02
                 and data.close > high_15m
-                and volume_today[symbol] > 30000
+                and volume_today[symbol] > 3000
             ):
                 # check for a positive, increasing MACD
                 hist = MACD(
@@ -257,10 +258,10 @@ def run(tickers, market_open_dt, market_close_dt):
                 if hist[-1] < 0 or np.diff(hist)[-1] < 0:
                     return
 
-                # personal
-                r = rsi(minute_history[symbol]["close"].dropna())
-                if r[-1] > 50:
-                    return
+                # # personal
+                # r = rsi(minute_history[symbol]["close"].dropna())
+                # if r[-1] > 50:
+                #     return
 
                 # Stock has passed all checks; figure out how much to buy
                 stop_price = data.close * 0.99
