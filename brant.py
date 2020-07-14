@@ -80,7 +80,7 @@ def get_tickers():
                 and data.close <= max_share_price
                 and data.volume * data.close > min_last_dv
             ):
-                dct[symbol] = api.polygon.daily_open_close(symbol, "2020-07-10")
+                dct[symbol] = api.polygon.daily_open_close(symbol, "2020-07-13")
         except requests.exceptions.HTTPError:
             print(f"Symbol {symbol} gave an error, excluding from universe.")
     # print(f"Including {len(data.keys())} stocks for trading today.")
@@ -109,7 +109,10 @@ def find_stop(current_value, minute_history, now):
 def run(tickers, market_open_dt, market_close_dt):
     # Establish streaming connection
     conn = tradeapi.StreamConn(
-        base_url=base_url, key_id=api_key_id, secret_key=api_secret
+        base_url=base_url,
+        key_id=api_key_id,
+        secret_key=api_secret,
+        data_stream="polygon",
     )
 
     # Update initial state with information from tickers
@@ -154,7 +157,7 @@ def run(tickers, market_open_dt, market_close_dt):
     partial_fills = {}
 
     # Use trade updates to keep track of our portfolio
-    @conn.on(r"trade_update")
+    @conn.on(r"^trade_updates$")
     async def handle_trade_update(conn, channel, data):
         symbol = data.order["symbol"]
         last_order = open_orders.get(symbol)
@@ -188,8 +191,9 @@ def run(tickers, market_open_dt, market_close_dt):
                 print(f"{symbol} cancelled or rejected.")
 
     # Replace aggregated 1s bars with incoming 1m bars
-    @conn.on(r"AM$")
+    @conn.on(r"^AM$")
     async def handle_minute_bar(conn, channel, data):
+        print("got some data")
         ts = data.start
         ts -= timedelta(microseconds=ts.microsecond)
         minute_history[data.symbol].loc[ts] = [
