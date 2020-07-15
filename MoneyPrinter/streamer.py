@@ -203,7 +203,3 @@ class AlpacaStreamer:
 
         run_ws(self.conn, self.channels)
 
-
-a = AlpacaStreamer()
-a.define_universe(quick=True)
-a.run()
