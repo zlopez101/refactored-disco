@@ -105,7 +105,8 @@ def run(min_share_price, max_share_price, min_dv, n_fast, n_slow, quick):
         closes = master_dct[data.symbol].close[:now]
         hist = macd(closes, n_fast=n_fast, n_slow=n_slow)
         order_history = {}
-        if hist[-1] > 0:
+        # only buy if macd is positive and symbol not already bought
+        if hist[-1] > 0 and not open_orders.get(symbol, None):
             print(
                 "Submitting buy for {} shares of {} at {}".format(
                     1, data.symbol, data.close
@@ -119,37 +120,40 @@ def run(min_share_price, max_share_price, min_dv, n_fast, n_slow, quick):
                     type="limit",
                     time_in_force="day",
                     limit_price=str(data.close),
+                    order_class="bracket",
+                    take_profit=dict(limit_price=f"{data.close * 1.02}"),
+                    stop_loss=dict(
+                        stop_price=f"{data.close * 0.99}",
+                        limit_price=f"{data.close * 0.99}",
+                    ),
                 )
                 open_orders[data.symbol] = buy
-                target_prices[data.symbol], stop_prices[data.symbol] = targets(
-                    data.close
-                )
-                print(f"bought 1 share of {data.symbol}")
+                print(f"Submitted order 1 share of {data.symbol}")
             except Exception as e:
                 print(e)
                 print(f"buy order for {data.symbol} not processed...")
 
-            position = positions.get(data.symbol, False)
-            if position:
-                if (
-                    data.close <= stop_prices[data.symbol]
-                    or data.close >= target_prices[data.symbol]
-                ):
-                    print(
-                        f"Submitting sell order for 1 share of {data.symbol} at {data.close}"
-                    )
-                    try:
-                        sell = api.submit_order(
-                            symbol=symbol,
-                            qty=str(position),
-                            side="sell",
-                            type="limit",
-                            time_in_force="day",
-                            limit_price=str(data.close),
-                        )
-                        open_orders[symbol] = sell
-                    except Exception as e:
-                        print(e)
+            # position = positions.get(data.symbol, False)
+            # if position:
+            #     if (
+            #         data.close <= stop_prices[data.symbol]
+            #         or data.close >= target_prices[data.symbol]
+            #     ):
+            #         print(
+            #             f"Submitting sell order for 1 share of {data.symbol} at {data.close}"
+            #         )
+            #         try:
+            #             sell = api.submit_order(
+            #                 symbol=symbol,
+            #                 qty=str(position),
+            #                 side="sell",
+            #                 type="limit",
+            #                 time_in_force="day",
+            #                 limit_price=str(data.close),
+            #             )
+            #             open_orders[symbol] = sell
+            #         except Exception as e:
+            #             print(e)
 
     channels_to_listen = [f"AM.{symbol}" for symbol in symbols_to_watch]
     channels_to_listen.insert(0, "trade_updates")
