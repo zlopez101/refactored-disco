@@ -155,6 +155,7 @@ def run(min_share_price, max_share_price, min_dv, n_fast, n_slow, quick):
     channels_to_listen.insert(0, "trade_updates")
 
     # conn.run(channels_to_listen)
+    # sample change
 
     def run_ws(conn, channels):
         try:
