@@ -1,5 +1,6 @@
 import websocket, json
 import asyncio
+import argparse
 from datetime import datetime
 import pandas as pd
 from utils import credentialing, get_tickers, targets
@@ -7,7 +8,7 @@ import alpaca_trade_api as trade_api
 from ta.trend import sma, macd
 
 
-def run(min_share_price=1, max_share_price=10, min_dv=1000000, quick=False):
+def run(min_share_price, max_share_price, min_dv, n_fast, n_slow, quick):
     url, key, secret = credentialing()
     conn = trade_api.StreamConn(
         base_url=url, key_id=key, secret_key=secret, data_stream="polygon"
@@ -99,11 +100,10 @@ def run(min_share_price=1, max_share_price=10, min_dv=1000000, quick=False):
             "close": data.close,
             "volume": data.volume,
         }
-        print("added some data!")
 
         # if the macd is above one, make a purchase of 1 share
         closes = master_dct[data.symbol].close[:now]
-        hist_fast = macd(closes, n_fast=12, n_slow=26)
+        hist_fast = macd(closes, n_fast=n_fast, n_slow=n_slow)
         order_history = {}
         if hist[-1] > 0:
             print(
@@ -170,4 +170,54 @@ def run(min_share_price=1, max_share_price=10, min_dv=1000000, quick=False):
 
 
 if __name__ == "__main__":
-    run()
+    parser = argparse.ArgumentParser(
+        "Stream Data from Alpaca and Trade based on Technical Indicators. Welcome to the new format!"
+    )
+    parser.add_argument(
+        "-n_fast",
+        type=int,
+        help="fast period for the macd. Default 12 period",
+        default=12,
+    )
+    parser.add_argument(
+        "-n_slow",
+        type=int,
+        help="slow period for the macd. Default 26 period",
+        default=26,
+    )
+    parser.add_argument(
+        "-quick",
+        type=bool,
+        help="If you would like to quickly test functionality",
+        default=False,
+    )
+
+    parser.add_argument(
+        "-min_share_price",
+        type=int,
+        help="Minimum value of share price at yesterday's close. Default $1",
+        default=1,
+    )
+    parser.add_argument(
+        "-max_share_price",
+        type=int,
+        help="Maximum value of share price at yesterday's close. Default $10",
+        default=10,
+    )
+    parser.add_argument(
+        "-min_dv",
+        type=int,
+        help="Minimum  dollar volume of shares traded yesterday. Default $1,000,000",
+        default=1000000,
+    )
+
+    args = parser.parse_args()
+    run(
+        args.min_share_price,
+        args.max_share_price,
+        args.min_dv,
+        args.n_fast,
+        args.n_slow,
+        args.quick,
+    )
+
