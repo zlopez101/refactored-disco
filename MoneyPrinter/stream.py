@@ -108,7 +108,7 @@ def run(min_share_price, max_share_price, min_dv, n_fast, n_slow, quick):
         if hist[-1] > 0:
             print(
                 "Submitting buy for {} shares of {} at {}".format(
-                    1, data.symbol, data.closes
+                    1, data.symbol, data.close
                 )
             )
             try:
@@ -154,19 +154,19 @@ def run(min_share_price, max_share_price, min_dv, n_fast, n_slow, quick):
     channels_to_listen = [f"AM.{symbol}" for symbol in symbols_to_watch]
     channels_to_listen.insert(0, "trade_updates")
 
-    conn.run(channels_to_listen)
+    # conn.run(channels_to_listen)
 
-    # def run_ws(conn, channels):
-    #     try:
-    #         print(f"listening...")
-    #         conn.run(channels)
-    #     except Exception as e:
-    #         print(e)
-    #         if e == asyncio.exceptions.CancelledError:
-    #             run_ws(conn, channels)
-    #         run_ws(conn, channels)
+    def run_ws(conn, channels):
+        try:
+            print(f"listening...")
+            conn.run(channels)
+        except Exception as e:
+            print(e)
+            if e == asyncio.exceptions.CancelledError:
+                run_ws(conn, channels)
+            run_ws(conn, channels)
 
-    # run_ws(conn, channels_to_listen)
+    run_ws(conn, channels_to_listen)
 
 
 if __name__ == "__main__":
