@@ -105,7 +105,7 @@ def run(min_share_price, max_share_price, min_dv, n_fast, n_slow, quick):
         closes = master_dct[data.symbol].close[:now]
         hist = macd(closes, n_fast=n_fast, n_slow=n_slow)
         order_history = {}
-        if hist > 0:
+        if hist[-1] > 0:
             print(
                 "Submitting buy for {} shares of {} at {}".format(
                     1, data.symbol, data.closes
@@ -173,13 +173,18 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         "Stream Data from Alpaca and Trade based on Technical Indicators. Welcome to the new format!"
     )
-    parser.add_argument(
+    screening = parser.add_argument_group(title="Stock Screening Values")
+    Moving_Average_Convergence_Divergence = parser.add_argument_group(
+        title="MACD Values"
+    )
+
+    Moving_Average_Convergence_Divergence.add_argument(
         "-n_fast",
         type=int,
         help="fast period for the macd. Default 12 period",
         default=12,
     )
-    parser.add_argument(
+    Moving_Average_Convergence_Divergence.add_argument(
         "-n_slow",
         type=int,
         help="slow period for the macd. Default 26 period",
@@ -192,19 +197,19 @@ if __name__ == "__main__":
         default=False,
     )
 
-    parser.add_argument(
+    screening.add_argument(
         "-min_share_price",
         type=int,
         help="Minimum value of share price at yesterday's close. Default $1",
         default=1,
     )
-    parser.add_argument(
+    screening.add_argument(
         "-max_share_price",
         type=int,
         help="Maximum value of share price at yesterday's close. Default $10",
         default=10,
     )
-    parser.add_argument(
+    screening.add_argument(
         "-min_dv",
         type=int,
         help="Minimum  dollar volume of shares traded yesterday. Default $1,000,000",
