@@ -8,7 +8,8 @@ import alpaca_trade_api as trade_api
 from ta.trend import sma, macd
 
 
-def run(min_share_price, max_share_price, min_dv, n_fast, n_slow, quick):
+def run(min_share_price, max_share_price, min_dv, n_fast, n_slow, quick, n_retries):
+    tries = 0
     url, key, secret = credentialing()
     conn = trade_api.StreamConn(
         base_url=url, key_id=key, secret_key=secret, data_stream="polygon"
@@ -167,9 +168,10 @@ def run(min_share_price, max_share_price, min_dv, n_fast, n_slow, quick):
             conn.run(channels)
         except Exception as e:
             print(e)
-            if e == asyncio.exceptions.CancelledError:
+            tries += 1
+            if tries <= n_retries:
                 run_ws(conn, channels)
-            run_ws(conn, channels)
+            print("ran out of retry options. better luck next time")
 
     run_ws(conn, channels_to_listen)
 
@@ -204,21 +206,27 @@ if __name__ == "__main__":
 
     screening.add_argument(
         "-min_share_price",
-        type=int,
+        type=float,
         help="Minimum value of share price at yesterday's close. Default $1",
         default=1,
     )
     screening.add_argument(
         "-max_share_price",
-        type=int,
+        type=float,
         help="Maximum value of share price at yesterday's close. Default $10",
         default=10,
     )
     screening.add_argument(
         "-min_dv",
-        type=int,
+        type=float,
         help="Minimum  dollar volume of shares traded yesterday. Default $1,000,000",
         default=1000000,
+    )
+    parser.add_argument(
+        "-n_retries",
+        type=int,
+        help="The number of times to try and reconnet. Default 100",
+        default=100,
     )
 
     args = parser.parse_args()
@@ -229,5 +237,6 @@ if __name__ == "__main__":
         args.n_fast,
         args.n_slow,
         args.quick,
+        args.n_retries,
     )
 
