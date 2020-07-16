@@ -103,12 +103,12 @@ def run(min_share_price=1, max_share_price=10, min_dv=1000000, quick=False):
 
         # if the macd is above one, make a purchase of 1 share
         closes = master_dct[data.symbol].close[:now]
-        hist = macd(closes)
+        hist_fast = macd(closes, n_fast=12, n_slow=26)
         order_history = {}
-        if True:
+        if hist[-1] > 0:
             print(
                 "Submitting buy for {} shares of {} at {}".format(
-                    1, data.symbol, data.close
+                    1, data.symbol, data.closes
                 )
             )
             try:
