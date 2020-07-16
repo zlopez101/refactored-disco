@@ -2,6 +2,7 @@ import os
 import requests
 from datetime import datetime
 import pandas as pd
+from pytz import timezone
 
 
 def credentialing(paper=True):
@@ -47,9 +48,10 @@ def create_dict(symbols):
 
 
 def business_day():
-    today = datetime.today()
-    start = datetime(today.year, today.month, today.day, 8, 00)
-    end = datetime(today.year, today.month, today.day, 3, 30)
+    nyc = timezone("America/New_York")
+    today = datetime.today().astimezone(nyc)
+    start = datetime(today.year, today.month, today.day, 8, 00).astimezone(nyc)
+    end = datetime(today.year, today.month, today.day, 15, 30).astimezone(nyc)
     return start, end
 
 
