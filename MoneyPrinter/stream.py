@@ -3,7 +3,7 @@ import asyncio
 import argparse
 from datetime import datetime
 import pandas as pd
-from utils import credentialing, get_tickers, targets
+from utils import credentialing, get_tickers, targets, cancel_old_orders
 import alpaca_trade_api as trade_api
 from ta.trend import sma, macd
 
@@ -107,7 +107,7 @@ def run(min_share_price, max_share_price, min_dv, n_fast, n_slow, quick, n_retri
         hist = macd(closes, n_fast=n_fast, n_slow=n_slow)
         order_history = {}
         # only buy if macd is positive and symbol not already bought
-        if hist[-1] > 0 and not open_orders.get(data.symbol, None):
+        if True:  # > 0 and not open_orders.get(data.symbol, None):
             print(
                 "Submitting buy for {} shares of {} at {}".format(
                     1, data.symbol, data.close
@@ -134,27 +134,28 @@ def run(min_share_price, max_share_price, min_dv, n_fast, n_slow, quick, n_retri
                 print(e)
                 print(f"buy order for {data.symbol} not processed...")
 
-            # position = positions.get(data.symbol, False)
-            # if position:
-            #     if (
-            #         data.close <= stop_prices[data.symbol]
-            #         or data.close >= target_prices[data.symbol]
-            #     ):
-            #         print(
-            #             f"Submitting sell order for 1 share of {data.symbol} at {data.close}"
-            #         )
-            #         try:
-            #             sell = api.submit_order(
-            #                 symbol=symbol,
-            #                 qty=str(position),
-            #                 side="sell",
-            #                 type="limit",
-            #                 time_in_force="day",
-            #                 limit_price=str(data.close),
-            #             )
-            #             open_orders[symbol] = sell
-            #         except Exception as e:
-            #             print(e)
+        cancel_old_orders(api, open_orders)
+        # position = positions.get(data.symbol, False)
+        # if position:
+        #     if (
+        #         data.close <= stop_prices[data.symbol]
+        #         or data.close >= target_prices[data.symbol]
+        #     ):
+        #         print(
+        #             f"Submitting sell order for 1 share of {data.symbol} at {data.close}"
+        #         )
+        #         try:
+        #             sell = api.submit_order(
+        #                 symbol=symbol,
+        #                 qty=str(position),
+        #                 side="sell",
+        #                 type="limit",
+        #                 time_in_force="day",
+        #                 limit_price=str(data.close),
+        #             )
+        #             open_orders[symbol] = sell
+        #         except Exception as e:
+        #             print(e)
 
     channels_to_listen = [f"AM.{symbol}" for symbol in symbols_to_watch]
     channels_to_listen.insert(0, "trade_updates")
@@ -171,7 +172,9 @@ def run(min_share_price, max_share_price, min_dv, n_fast, n_slow, quick, n_retri
             tries += 1
             if tries <= n_retries:
                 run_ws(conn, channels, tries)
-            print("ran out of retry options. better luck next time")
+            else:
+                print("ran out of retry options. better luck next time")
+                conn.close()
 
     run_ws(conn, channels_to_listen, tries)
 

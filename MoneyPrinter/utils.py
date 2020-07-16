@@ -96,3 +96,26 @@ def targets(price, simple=True):
     """
     if simple:
         return price * 1.02, price * 0.99
+
+
+def cancel_old_orders(api, orders, order_expiration=2):
+    """
+    Cancels orders that exceed order_expiration in minutes
+
+    : param api: Alpaca REST endpoint
+    : dict orders: a dictionary with symbols for keys and orders for values
+    : int order_expiration: int for minutes to leave orders open 
+    """
+    current_time = api.get_clock().timestamp
+    old_orders = [
+        order.id
+        for order in orders.values()
+        if (order.status == "held" or order.status == "new")
+        and order.submitted_at + timedelta(minutes=order_expiration) > current_time
+    ]
+    for order in old_orders:
+        try:
+            api.cancel_order(order)
+        except Exception as e:
+            print(e)
+            print(f"Unable to cancel order id {order}")
