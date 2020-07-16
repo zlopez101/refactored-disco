@@ -107,7 +107,7 @@ def run(min_share_price, max_share_price, min_dv, n_fast, n_slow, quick, n_retri
         hist = macd(closes, n_fast=n_fast, n_slow=n_slow)
         order_history = {}
         # only buy if macd is positive and symbol not already bought
-        if hist[-1] > 0 and not open_orders.get(symbol, None):
+        if hist[-1] > 0 and not open_orders.get(data.symbol, None):
             print(
                 "Submitting buy for {} shares of {} at {}".format(
                     1, data.symbol, data.close
@@ -162,7 +162,7 @@ def run(min_share_price, max_share_price, min_dv, n_fast, n_slow, quick, n_retri
     # conn.run(channels_to_listen)
     # sample change
 
-    def run_ws(conn, channels):
+    def run_ws(conn, channels, tries):
         try:
             print(f"listening...")
             conn.run(channels)
@@ -170,7 +170,7 @@ def run(min_share_price, max_share_price, min_dv, n_fast, n_slow, quick, n_retri
             print(e)
             tries += 1
             if tries <= n_retries:
-                run_ws(conn, channels)
+                run_ws(conn, channels, tries)
             print("ran out of retry options. better luck next time")
 
     run_ws(conn, channels_to_listen)
