@@ -173,7 +173,7 @@ def run(min_share_price, max_share_price, min_dv, n_fast, n_slow, quick, n_retri
                 run_ws(conn, channels, tries)
             print("ran out of retry options. better luck next time")
 
-    run_ws(conn, channels_to_listen)
+    run_ws(conn, channels_to_listen, tries)
 
 
 if __name__ == "__main__":
