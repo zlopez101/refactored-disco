@@ -3,12 +3,30 @@ import asyncio
 import argparse
 from datetime import datetime
 import pandas as pd
-from utils import credentialing, get_tickers, targets, cancel_old_orders
+from utils import credentialing, get_tickers, targets, cancel_old_orders, tz
 import alpaca_trade_api as trade_api
 from ta.trend import sma, macd
 
 
-def run(min_share_price, max_share_price, min_dv, n_fast, n_slow, quick, n_retries):
+# import logging
+
+# logging.basicConfig(
+#     filename="streaming_output.log",
+#     level=logging.INFO,
+#     format="%(asctime)s:%(levelname)s:%(message)s",
+# )
+
+
+def run(
+    min_share_price,
+    max_share_price,
+    min_dv,
+    n_fast,
+    n_slow,
+    quick,
+    n_retries,
+    time_zone,
+):
     tries = 0
     url, key, secret = credentialing()
     conn = trade_api.StreamConn(
@@ -48,6 +66,7 @@ def run(min_share_price, max_share_price, min_dv, n_fast, n_slow, quick, n_retri
     symbols_to_watch = get_tickers(
         api, min_share_price, max_share_price, min_dv, quick=quick
     )
+    # logging.info(f"Tickers added.")
     master_dct = create_dict(symbols_to_watch)
 
     open_orders = {}
@@ -107,14 +126,14 @@ def run(min_share_price, max_share_price, min_dv, n_fast, n_slow, quick, n_retri
         hist = macd(closes, n_fast=n_fast, n_slow=n_slow)
         order_history = {}
         # only buy if macd is positive and symbol not already bought
-        if hist[-1] > 0 and open_orders.get(data.symbol, None):
+        if hist[-1] > 0 and not open_orders.get(data.symbol, None):
             try:
                 buy = api.submit_order(
                     symbol=data.symbol,
                     qty=1,
                     side="buy",
                     type="limit",
-                    time_in_force="day",
+                    time_in_force="gtc",
                     limit_price=str(data.close),
                     order_class="bracket",
                     take_profit=dict(limit_price=f"{data.close * 1.02}"),
@@ -129,7 +148,7 @@ def run(min_share_price, max_share_price, min_dv, n_fast, n_slow, quick, n_retri
                 print(e)
                 print(f"buy order for {data.symbol} not processed...")
 
-        cancel_old_orders(api, open_orders)
+        # cancel_old_orders(api, open_orders, time_zone)
         # position = positions.get(data.symbol, False)
         # if position:
         #     if (
@@ -157,7 +176,9 @@ def run(min_share_price, max_share_price, min_dv, n_fast, n_slow, quick, n_retri
 
     # conn.run(channels_to_listen)
     # sample change
-
+    # loop = conn.loop
+    # loop.run_until_complete(asyncio.gather(conn.subscribe(channels_to_listen)))
+    # loop.close()
     def run_ws(conn, channels, tries):
         try:
             print(f"listening...")
@@ -228,6 +249,7 @@ if __name__ == "__main__":
     )
 
     args = parser.parse_args()
+
     run(
         args.min_share_price,
         args.max_share_price,
@@ -236,5 +258,6 @@ if __name__ == "__main__":
         args.n_slow,
         args.quick,
         args.n_retries,
+        tz(),
     )
 

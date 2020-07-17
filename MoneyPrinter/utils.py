@@ -99,7 +99,11 @@ def targets(price, simple=True):
         return price * 1.02, price * 0.99
 
 
-def cancel_old_orders(api, orders, order_expiration=2):
+def tz():
+    return timezone("America/New_York")
+
+
+def cancel_old_orders(api, orders, timezone, order_expiration=2):
     """
     Cancels orders that exceed order_expiration in minutes
 
@@ -107,7 +111,8 @@ def cancel_old_orders(api, orders, order_expiration=2):
     : dict orders: a dictionary with symbols for keys and orders for values
     : int order_expiration: int for minutes to leave orders open 
     """
-    current_time = api.get_clock().timestamp
+
+    current_time = pd.Timestamp(datetime.now().astimezone(timezone)).isoformat()
     old_orders = [
         order.id
         for order in orders.values()
