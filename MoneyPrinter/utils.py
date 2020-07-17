@@ -1,6 +1,6 @@
 import os
 import requests
-from datetime import datetime
+from datetime import datetime, timedelta
 import pandas as pd
 from pytz import timezone
 
@@ -61,7 +61,8 @@ def get_tickers(api, min_share_price, max_share_price, min_dv, quick=False):
     """
     print("Getting current ticker data...")
     # tickers = api.polygon.all_tickers()
-
+    start, _ = business_day()
+    yesterday = start - timedelta(days=1)
     assets = api.list_assets(status="active", asset_class="us_equity")
     symbols = [
         asset.symbol
@@ -76,7 +77,7 @@ def get_tickers(api, min_share_price, max_share_price, min_dv, quick=False):
         symbols = symbols[:10]
     for symbol in symbols:
         try:
-            data = api.polygon.daily_open_close(symbol, "2020-07-13")
+            data = api.polygon.daily_open_close(symbol, yesterday.strftime("%Y-%m-%d"))
             if (
                 data.close >= min_share_price
                 and data.close <= max_share_price
