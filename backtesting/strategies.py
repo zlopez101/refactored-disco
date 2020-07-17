@@ -21,3 +21,18 @@ class ZachSMA(bt.Strategy):
         elif self.crossover < 0:  # in the market & cross to the downside
             self.close()  # close long position
 
+
+class ZachSO(bt.Strategy):
+    def __init__(self):
+        pass
+
+    def next(self):
+        pass
+
+class ZachRSI(bt.Strategy):
+    def __init__(self):
+        pass
+
+    def next(self):
+        pass
+

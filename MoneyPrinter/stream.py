@@ -107,12 +107,7 @@ def run(min_share_price, max_share_price, min_dv, n_fast, n_slow, quick, n_retri
         hist = macd(closes, n_fast=n_fast, n_slow=n_slow)
         order_history = {}
         # only buy if macd is positive and symbol not already bought
-        if True:  # > 0 and not open_orders.get(data.symbol, None):
-            print(
-                "Submitting buy for {} shares of {} at {}".format(
-                    1, data.symbol, data.close
-                )
-            )
+        if hist[-1] > 0 and open_orders.get(data.symbol, None):
             try:
                 buy = api.submit_order(
                     symbol=data.symbol,
