@@ -151,8 +151,10 @@ def run(
         closes = master_dct[data.symbol].close[:now]
         hist = macd(closes, n_fast=n_fast, n_slow=n_slow)
         order_history = {}
-        # only buy if macd is positive and symbol not already bought
-        if hist[-1] > 0 and not positions.get(data.symbol, None):
+        # only buy if macd is positive and symbol not already bought or open_order submitted
+        if hist[-1] > 0 and not (
+            positions.get(data.symbol, None) or open_orders.get(data.symbol, None)
+        ):
             try:
                 buy = api.submit_order(
                     symbol=data.symbol,
