@@ -4,3 +4,5 @@ venv
 .vscode
 *.pyc
 *.ipnb
+new_websocket.py
+asynchron.py

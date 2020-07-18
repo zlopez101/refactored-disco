@@ -24,10 +24,11 @@ class ZachSMA(bt.Strategy):
 
 class ZachSO(bt.Strategy):
     def __init__(self):
-        pass
+        so = bt.ind.Stochastic()
 
     def next(self):
         pass
+
 
 class ZachRSI(bt.Strategy):
     def __init__(self):

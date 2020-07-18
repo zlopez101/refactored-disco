@@ -1,10 +1,11 @@
 import os
 from datetime import datetime
 from pytz import timezone
-from backtrader.feed import DataBase
+import backtrader as bt
 import alpaca_trade_api as tradeapi
+
 import pandas as pd
-from numpy import logical_and
+from numpy import logical_and, argmin
 
 
 def credentialing(paper=True):
@@ -29,19 +30,6 @@ def business_day():
     return start, end
 
 
-# class PandasData(DataBase):
-
-#     params = (
-#         ("datetime", None),
-#         ("open", -1),
-#         ("high", -1),
-#         ("low", -1),
-#         ("volume", -1),
-#         ("close", -1),
-#         ("openinterest", None),
-#     )
-
-
 def get_data(symbol):
     """
     get the 1 minute aggregate data for trading on 7/8
@@ -58,3 +46,15 @@ def get_data(symbol):
     ).df
     df = df[logical_and(df.index >= start, df.index <= end)]
     return df
+
+
+def get_best_parameters(lst):
+    """
+    The list will have be made of tuples of the result. The parameters specifed will be the first values and ending portfolio value of the simulation is last value.
+    """
+    best = argmin([sim[-1] for sim in lst])
+    return best
+
+
+def _run(*args, **kwargs):
+    pass

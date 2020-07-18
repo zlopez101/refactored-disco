@@ -1,19 +1,22 @@
 import backtrader as bt
 import matplotlib.pyplot as plt
-from btutils import get_data
+from btutils import get_data, get_best_parameters
 
 from strategies import ZachSMA
 import argparse
 
 
-def run(pfast=(5, 20), pslow=(26, 41)):
+def run(dct):
     results = []
-    data = get_data("TSLA")
+    data = get_data(dct["Symbol"])
     btready_data = bt.feeds.PandasData(dataname=data)
-    print(len(data))
+    dct.pop("Symbol")
+    iterators = dct.keys()
+    # print(len(iterators))
+    # for i in range(len(iterators):
 
-    for i in range(pfast[0], pfast[1] + 1):
-        for j in range(pslow[0], pslow[1] + 1):
+    for i in range(dct["ma_fast"][0], dct["ma_fast"][1] + 1):
+        for j in range(dct["ma_slow"][0], dct["ma_slow"][1] + 1):
             cerebro = bt.Cerebro()
             cerebro.broker.set_cash(100000)
             cerebro.adddata(btready_data)
@@ -21,30 +24,38 @@ def run(pfast=(5, 20), pslow=(26, 41)):
             cerebro.run()
             end = cerebro.broker.getvalue()
             results.append((i, j, end))
-    values = [results[-1] for result in results]
-    best = results[results.index(max(values))]
-    print(
-        f"The best combinations of period  for the moving average crossover the ranges ({pslow[0]}, {pslow[1]}) for the slow period and ({pfast[0]}, {pfast[1]}) for the fast period were {best[0]} fast and {best[1]} slow."
-    )
-    """
-    cerebro = bt.Cerebro()
-    cerebro.broker.set_cash(100000)
-    cerebro.adddata(btready_data)
-    cerebro.addstrategy(ZachSMA)
-    cerebro.run()
-    print(cerebro.broker.getvalue())
-    """
-    # results[end] = {"pslow": j, "pfast": i}
-    # print(pfast[0])
-    # print(pslow[0])
-    # print(results)
-
-    # cerebro.plot()
+    best_parameters = results[get_best_parameters(results)][:-1]
+    best_parameters = zip(iterators, best_parameters)
+    print(*best_parameters)
 
 
 if __name__ == "__main__":
 
-    # parser = argparse.ArgumentParser("Welcome to the Backtrading Integration.")
-    print("running..")
-    run()
+    parser = argparse.ArgumentParser("Welcome to the Backtrading Integration.")
+    parser.add_argument(
+        "Symbol",
+        type=str,
+        help="Choose a single symbol or a random one will be selected",
+    )
+    ma = parser.add_argument_group("Smooth Moving Average parameters ")
+    rsi = parser.add_argument_group("RSI parameters ")
+    so = parser.add_argument_group("Stochastic Oscillator parameters")
+
+    ma.add_argument(
+        "-ma_slow",
+        nargs=2,
+        type=int,
+        default=[26, 40],
+        help="input two periods seperated by only 1 space",
+    )
+    ma.add_argument(
+        "-ma_fast",
+        nargs=2,
+        type=int,
+        default=[8, 20],
+        help="input two periods seperated by only 1 space",
+    )
+
+    args = parser.parse_args()
+    run(vars(args))
 

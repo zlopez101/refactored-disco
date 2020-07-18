@@ -113,7 +113,7 @@ def cancel_old_orders(api, orders, timezone, order_expiration=2):
     """
 
     current_time = pd.Timestamp(datetime.now().astimezone(timezone)).isoformat()
-    old_orders = [
+    old_orders = 
         order.id
         for order in orders.values()
         if (order.status == "held" or order.status == "new")
