@@ -4,6 +4,37 @@
 
 This project is an attempt to automate trading strategies for stock market from end-to-end using Alpaca.
 
+
+## Cloning this repository
+This step will only need to be done once. Go ahead and delete whatever folder you previously stored stuff in. 
+1. Open anaconda prompt. You can stay in the home directory (no `cd`-ing)
+2. `git clone https://github.com/zlopez101/refactored-disco.git`
+    * this creates the folder and all all files contained within the github repo. Don't create a folder to store it in. Git takes care of tracking all the versions of the software. If we make a mistake in an update, we can *easily* roll back the update. 
+
+### Updating Changes
+
+1. Open anaconda prompt.
+2. `cd refactored-disco`
+3. `git pull`
+
+### Running the Live Trader
+
+1. Open anaconda prompt.
+2. `cd refactored-disco/MoneyPrinter`
+4. Make sure the conda environment is activate → should say `(trader)` at the beginning of line
+    - If not active, run `conda activate trader`
+5. Run the trader `python stream.py` 
+    - Flags for customization `-h` → help for display
+
+### Running the Backtester
+0. You will need to download the backtrader package.
+    a. `conda activate trader`
+    b. `pip install backtrader[plotting]`
+1. Open anaconda prompt.
+2. `cd refactored-disco/backtesting`
+3. `python backtest.py -h` for help commands
+4. `python backtest.py` + whatever moving average periods and Symbol you wish to test for
+
 ## Things to Work on:
 
 1. Backtesting
@@ -23,7 +54,7 @@ This project is an attempt to automate trading strategies for stock market from 
 2. Live Trader
     - [x]  Moving Average Crossover Divergence Indicator
     - [ ]  RSI, SO, SMA etc.
-    - [ ]  Timing for order cancellations
+    - [X]  Timing for order cancellations
         * I defined `cancel_old_orders` in the utils.py file. The idea is to get the current time as defined by 
         * My `cancel_old_orders` function call right now is placed in the `on_minute_bars` asynchronous function. That `on_minute_bars` function is called every minute for every stock we include in the trading universe. So every minute the `cancel_old_orders` function is called for every ticker. If more than 200 stocks are being watched, alpaca flags the account for exceeding 200 requests/min rate and throttles us. Which screws everything up. 
         * you might be wondering....why are we set up this way...shouldn't we just make the function run once per minute, not the # of stocks per minute? Well basically the program runs in a "event loop'. It stays in that loop till the program errors out (which is another issue). You have to define event in that loop before (that's what the `@conn.on()` is). The "easiest" implementation of the loop is follow the alpaca set-up, but it gives you the least flexibility since you can't customize events.
@@ -46,29 +77,3 @@ This project is an attempt to automate trading strategies for stock market from 
 
     Best coding practices require that we write tests for all of our functions/classes etc to make sure that they behave as expected, especially once the project becomes very large. Normally, I would ignore this extrememly tedious job of writing tests, but since the goal is to put real money on the line, I think it becomes very important to make sure that everything works PERFECTLY. 
     - [ ]  Haven't start this yet, will take a look over the weekend 7/17-7/20.
-
-## Cloning this repository
-This step will only need to be done once. Go ahead and erase whatever folder you previously stored th
-1. Open anaconda prompt. You can stay in the home directory (no `cd`-ing)
-2. `git clone https://github.com/zlopez101/refactored-disco.git`
-    * this creates the folder and all all files contained within the github repo.
-
-### Updating Changes
-
-1. Open anaconda prompt.
-2. `cd refactored-disco`
-3. `git pull`
-
-### Running the Live Trader
-
-1. Open anaconda prompt.
-2. `cd refactored-disco/MoneyPrinter`
-4. Make sure the conda environment is activate → should say `(trader)` at the beginning of line
-    - If not active, run `conda activate trader`
-5. Run the trader `python stream.py` 
-    - Flags for customization `-h` → help for display
-
-### Running the Backtester
-0. You will need to download the backtrader package....
-1. Open anaconda prompt.
-2. `cd refactored-disco/backtesting`

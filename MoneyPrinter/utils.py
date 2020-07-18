@@ -101,27 +101,3 @@ def targets(price, simple=True):
 
 def tz():
     return timezone("America/New_York")
-
-
-def cancel_old_orders(api, orders, timezone, order_expiration=2):
-    """
-    Cancels orders that exceed order_expiration in minutes
-
-    : param api: Alpaca REST endpoint
-    : dict orders: a dictionary with symbols for keys and orders for values
-    : int order_expiration: int for minutes to leave orders open 
-    """
-
-    current_time = pd.Timestamp(datetime.now().astimezone(timezone)).isoformat()
-    old_orders = 
-        order.id
-        for order in orders.values()
-        if (order.status == "held" or order.status == "new")
-        and order.submitted_at + timedelta(minutes=order_expiration) > current_time
-    ]
-    for order in old_orders:
-        try:
-            api.cancel_order(order)
-        except Exception as e:
-            print(e)
-            print(f"Unable to cancel order id {order}")

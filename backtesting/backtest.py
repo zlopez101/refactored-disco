@@ -11,12 +11,16 @@ def run(dct):
     data = get_data(dct["Symbol"])
     btready_data = bt.feeds.PandasData(dataname=data)
     dct.pop("Symbol")
-    iterators = dct.keys()
-    # print(len(iterators))
-    # for i in range(len(iterators):
-
-    for i in range(dct["ma_fast"][0], dct["ma_fast"][1] + 1):
-        for j in range(dct["ma_slow"][0], dct["ma_slow"][1] + 1):
+    iterators = list(dct.keys())
+    """
+    new idea: a recursive function that builds generators for indicators...
+    """
+    for i in range(dct[iterators[0]][0], dct[iterators[0]][1]):
+        for j in range(dct[iterators[1]][0], dct[iterators[1]][1]):
+            # for k in range(1):
+            #     for l in range(1):
+            #         for m in range(1):
+            #             for z in range(1):
             cerebro = bt.Cerebro()
             cerebro.broker.set_cash(100000)
             cerebro.adddata(btready_data)
@@ -45,15 +49,13 @@ if __name__ == "__main__":
         "-ma_slow",
         nargs=2,
         type=int,
-        default=[26, 40],
-        help="input two periods seperated by only 1 space",
+        help="input two periods seperated by only 1 space. Final Value not inclusive",
     )
     ma.add_argument(
         "-ma_fast",
         nargs=2,
         type=int,
-        default=[8, 20],
-        help="input two periods seperated by only 1 space",
+        help="input two periods seperated by only 1 space. Final Value not inclusive",
     )
 
     args = parser.parse_args()

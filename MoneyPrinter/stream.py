@@ -3,18 +3,16 @@ import asyncio
 import argparse
 from datetime import datetime
 import pandas as pd
-from utils import credentialing, get_tickers, targets, cancel_old_orders, tz
+from utils import credentialing, get_tickers, targets, tz
 import alpaca_trade_api as trade_api
 from ta.trend import sma, macd
+import logging
 
-
-# import logging
-
-# logging.basicConfig(
-#     filename="streaming_output.log",
-#     level=logging.INFO,
-#     format="%(asctime)s:%(levelname)s:%(message)s",
-# )
+logging.basicConfig(
+    filename="streaming_output.log",
+    level=logging.INFO,
+    format="%(asctime)s:%(levelname)s:%(message)s",
+)
 
 
 def run(
@@ -66,21 +64,47 @@ def run(
     symbols_to_watch = get_tickers(
         api, min_share_price, max_share_price, min_dv, quick=quick
     )
-    # logging.info(f"Tickers added.")
+    logging.info(f"Tickers added.")
     master_dct = create_dict(symbols_to_watch)
 
     open_orders = {}
-    partial_fills = {}
     positions = {}
-    stop_prices = {}
-    target_prices = {}
+
+    def cancel_old_orders(api, orders, symbol, timezone, order_expiration=2):
+        """
+        Cancels orders that exceed order_expiration in minutes
+
+        : param api: Alpaca REST endpoint
+        : dict orders: a dictionary with symbols for keys and orders for values
+        : str symbol: a string with the symbol for the stock
+        : int order_expiration: int for minutes to leave orders open 
+        """
+        current_time = pd.Timestamp(datetime.now().astimezone(timezone)).isoformat()
+        order_for_symbol = orders[symbol]
+        if (
+            (order_for_symbol.status == "held" or order_for_symbol.status == "new")
+            and order_for_symbol.submitted_at
+            + timedelta(minutes=order_for_symbol_expiration)
+            > current_time
+        ):
+            try:
+                api.cancel_order(order_for_symbol)
+            except Exception as e:
+                logging.debug(e)
+                logging.debug(f"Unable to cancel order id {order_for_symbol}")
 
     @conn.on(r"^trade_updates$")
     async def handle_trade_update(conn, channel, data):
         symbol = data.order["symbol"]
-        last_order = open_orders.get(symbol)
+        # get the last order, or return a None value
+        last_order = open_orders.get(symbol, None)
+        # if the value is None (there is no order for the symbol) then loop does not cover
+        # if the last_order is True, then loop
         if last_order is not None:
             event = data.event
+            """
+            ***we are testing with only buying 1 share for each positive signal. no partial fills yet***
+
             if event == "partial_fill":
                 qty = int(data.order["filled_qty"])
                 if data.order["side"] == "sell":
@@ -92,21 +116,23 @@ def run(
                 positions[symbol] += qty
                 open_orders[symbol] = data.order
                 print(f"partial fill of {symbol}")
-            elif event == "fill":
+            """
+            if event == "fill":
                 qty = int(data.order["filled_qty"])
                 if data.order["side"] == "sell":
                     qty = qty * -1
-                positions[symbol] = positions.get(symbol, 0) - partial_fills.get(
+                positions[symbol] = positions.get(
                     symbol, 0
-                )
-                partial_fills[symbol] = 0
+                )  # - partial_fills.get(symbol, 0)
+                # partial_fills[symbol] = 0
                 positions[symbol] += qty
                 open_orders[symbol] = None
-                print(f"fill of {symbol}")
+                logging.info(f"Fill of {symbol}")
             elif event == "canceled" or event == "rejected":
-                partial_fills[symbol] = 0
+                # partial_fills[symbol] = 0
                 open_orders[symbol] = None
-                print(f"{symbol} cancelled or rejected.")
+                logging.info(f"{symbol} cancelled or rejected")
+                # print(f"{symbol} cancelled or rejected.")
 
     @conn.on(r"^AM$")
     async def on_minute_bars(conn, channel, data):
@@ -126,7 +152,7 @@ def run(
         hist = macd(closes, n_fast=n_fast, n_slow=n_slow)
         order_history = {}
         # only buy if macd is positive and symbol not already bought
-        if hist[-1] > 0 and not open_orders.get(data.symbol, None):
+        if hist[-1] > 0 and not positions.get(data.symbol, None):
             try:
                 buy = api.submit_order(
                     symbol=data.symbol,
@@ -143,53 +169,30 @@ def run(
                     ),
                 )
                 open_orders[data.symbol] = buy
-                print(f"Submitted order 1 share of {data.symbol}")
+                logging.info(f"Submitted order 1 share of {data.symbol}")
             except Exception as e:
-                print(e)
-                print(f"buy order for {data.symbol} not processed...")
+                logging.debug(e)
+                logging.debug(f"buy order for {data.symbol} not processed...")
 
-        # cancel_old_orders(api, open_orders, time_zone)
-        # position = positions.get(data.symbol, False)
-        # if position:
-        #     if (
-        #         data.close <= stop_prices[data.symbol]
-        #         or data.close >= target_prices[data.symbol]
-        #     ):
-        #         print(
-        #             f"Submitting sell order for 1 share of {data.symbol} at {data.close}"
-        #         )
-        #         try:
-        #             sell = api.submit_order(
-        #                 symbol=symbol,
-        #                 qty=str(position),
-        #                 side="sell",
-        #                 type="limit",
-        #                 time_in_force="day",
-        #                 limit_price=str(data.close),
-        #             )
-        #             open_orders[symbol] = sell
-        #         except Exception as e:
-        #             print(e)
+        cancel_old_orders(api, open_orders, data.symbol, time_zone)
 
     channels_to_listen = [f"AM.{symbol}" for symbol in symbols_to_watch]
     channels_to_listen.insert(0, "trade_updates")
 
-    # conn.run(channels_to_listen)
-    # sample change
-    # loop = conn.loop
-    # loop.run_until_complete(asyncio.gather(conn.subscribe(channels_to_listen)))
-    # loop.close()
     def run_ws(conn, channels, tries):
+        """
+        try to reconnect if the websocket connection fails
+        """
         try:
-            print(f"listening...")
+            logging.info(f"listening...")
             conn.run(channels)
         except Exception as e:
-            print(e)
+            logging.debug(e)
             tries += 1
             if tries <= n_retries:
                 run_ws(conn, channels, tries)
             else:
-                print("ran out of retry options. better luck next time")
+                logging.debug("ran out of retry options. better luck next time")
                 conn.close()
 
     run_ws(conn, channels_to_listen, tries)

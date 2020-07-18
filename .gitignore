@@ -6,3 +6,4 @@ venv
 *.ipnb
 new_websocket.py
 asynchron.py
+streaming_output.log
