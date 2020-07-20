@@ -181,23 +181,16 @@ def run(
     channels_to_listen = [f"AM.{symbol}" for symbol in symbols_to_watch]
     channels_to_listen.insert(0, "trade_updates")
 
-    def run_ws(conn, channels, tries):
-        """
-        try to reconnect if the websocket connection fails
-        """
+    def run_ws(conn, channels):
         try:
-            logging.info(f"listening...")
+            print("listening")
             conn.run(channels)
         except Exception as e:
-            logging.debug(e)
-            tries += 1
-            if tries <= n_retries:
-                run_ws(conn, channels, tries)
-            else:
-                logging.debug("ran out of retry options. better luck next time")
-                conn.close()
+            print(e)
+            conn.close()
+            run_ws(conn, channels)
 
-    run_ws(conn, channels_to_listen, tries)
+    run_ws(conn, channels_to_listen)
 
 
 if __name__ == "__main__":

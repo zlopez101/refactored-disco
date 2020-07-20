@@ -62,7 +62,7 @@ This step will only need to be done once. Go ahead and delete whatever folder yo
         ### We might have to rebuild the whole websocket from scratch
         * This isn't the worst thing in the world, since if we want to use other brokers ideally we would only have implement minor changes to a propietary websocket connection. 
         * Timeline: not sure, hopefully <1 week. Can only test during market hours. Building our own would take...some time. not sure.
-    - [ ]  Logging
+    - [x]  Logging
         * the print statements are really annoying i think and kinda useless since they go by fast, especially when watching 200+ stocks. 
         * Python provides a `logging` module that writes statements to an output log file that we can inspect. 
         * Additionally, we can write another program that ingests this log file for analysis i.e. track orders, understand fill errors, and other debugging.

@@ -62,7 +62,7 @@ def get_tickers(api, min_share_price, max_share_price, min_dv, quick=False):
     print("Getting current ticker data...")
     # tickers = api.polygon.all_tickers()
     start, _ = business_day()
-    yesterday = start - timedelta(days=1)
+    yesterday = start - timedelta(days=3)
     assets = api.list_assets(status="active", asset_class="us_equity")
     symbols = [
         asset.symbol

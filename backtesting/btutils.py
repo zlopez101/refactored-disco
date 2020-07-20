@@ -5,7 +5,7 @@ import backtrader as bt
 import alpaca_trade_api as tradeapi
 
 import pandas as pd
-from numpy import logical_and, argmin
+from numpy import logical_and, argmax
 
 
 def credentialing(paper=True):
@@ -25,8 +25,8 @@ def business_day():
     returns business hours for July 8th, 2020. This date was picked randomly (coded on 7/16/2020)
     """
     nyc = timezone("America/New_York")
-    start = datetime(2020, 7, 8, 8, 00).astimezone(nyc)
-    end = datetime(2020, 7, 8, 15, 30).astimezone(nyc)
+    start = datetime(2020, 7, 15, 8, 00).astimezone(nyc)
+    end = datetime(2020, 7, 15, 15, 30).astimezone(nyc)
     return start, end
 
 
@@ -52,9 +52,19 @@ def get_best_parameters(lst):
     """
     The list will have be made of tuples of the result. The parameters specifed will be the first values and ending portfolio value of the simulation is last value.
     """
-    best = argmin([sim[-1] for sim in lst])
+    best = argmax([sim[-1] for sim in lst])
     return best
 
 
-def _run(*args, **kwargs):
-    pass
+def get_ranges(dct, ls):
+    """
+    return ranges for specified keys. Values of keys are lists of len 2 of type [start,  stop]
+    """
+    keys = list(dct.keys())
+    if len(keys) == 0:
+        return ls
+    else:
+        rn = dct.pop(keys[0])
+        ls.append(range(rn[0], rn[1]))
+        return get_ranges(dct, ls)
+
