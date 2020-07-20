@@ -10,7 +10,7 @@ This step will only need to be done once. Go ahead and delete whatever folder yo
 1. Open anaconda prompt. You can stay in the home directory (no `cd`-ing)
 2. `git clone https://github.com/zlopez101/refactored-disco.git`
     * this creates the folder and all all files contained within the github repo. Don't create a folder to store it in. Git takes care of tracking all the versions of the software. If we make a mistake in an update, we can *easily* roll back the update. 
-
+3. Now you need to create the new environment. `cd refactored-disco` then `conda env create --file alpaca.yml`
 ### Updating Changes
 
 1. Open anaconda prompt.

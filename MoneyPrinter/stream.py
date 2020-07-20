@@ -7,6 +7,7 @@ from utils import credentialing, get_tickers, targets, tz
 import alpaca_trade_api as trade_api
 from ta.trend import sma, macd
 import logging
+from time import sleep
 
 logging.basicConfig(
     filename="streaming_output.log",
@@ -79,19 +80,19 @@ def run(
         : str symbol: a string with the symbol for the stock
         : int order_expiration: int for minutes to leave orders open 
         """
-        current_time = pd.Timestamp(datetime.now().astimezone(timezone)).isoformat()
-        order_for_symbol = orders[symbol]
-        if (
-            (order_for_symbol.status == "held" or order_for_symbol.status == "new")
-            and order_for_symbol.submitted_at
-            + timedelta(minutes=order_for_symbol_expiration)
-            > current_time
-        ):
-            try:
-                api.cancel_order(order_for_symbol)
-            except Exception as e:
-                logging.debug(e)
-                logging.debug(f"Unable to cancel order id {order_for_symbol}")
+        current_time = pd.Timestamp(datetime.now().astimezone(timezone))
+        order_for_symbol = orders.get(symbol, None)
+        if order_for_symbol:
+            if (
+                (order_for_symbol.status == "held" or order_for_symbol.status == "new")
+                and order_for_symbol.submitted_at + timedelta(minutes=order_expiration)
+                > current_time
+            ):
+                try:
+                    api.cancel_order(order_for_symbol.id)
+                except Exception as e:
+                    logging.debug(e)
+                    logging.debug(f"Unable to cancel order id {order_for_symbol}")
 
     @conn.on(r"^trade_updates$")
     async def handle_trade_update(conn, channel, data):
@@ -188,6 +189,7 @@ def run(
         except Exception as e:
             print(e)
             conn.close()
+            sleep(5)
             run_ws(conn, channels)
 
     run_ws(conn, channels_to_listen)
