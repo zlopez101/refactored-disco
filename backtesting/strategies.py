@@ -1,4 +1,8 @@
 import backtrader as bt
+import logging
+
+
+logging.basicConfig("strategy.log", level=logging.INFO)
 
 
 class Zach(bt.Strategy):
@@ -11,6 +15,12 @@ class Zach(bt.Strategy):
         rsi_low=None,
         macd_filter=None,
     )
+
+    def log(self, txt):
+        """
+        logging function
+        """
+        dt = self.data.datetime[0]
 
     def __init__(self):
 

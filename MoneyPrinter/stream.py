@@ -90,6 +90,7 @@ def run(
             ):
                 try:
                     api.cancel_order(order_for_symbol.id)
+                    logging.info(f"Order Cancelled for {symbol}")
                 except Exception as e:
                     logging.debug(e)
                     logging.debug(f"Unable to cancel order id {order_for_symbol}")
@@ -218,9 +219,9 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "-quick",
-        type=bool,
         help="If you would like to quickly test functionality",
         default=False,
+        action="store_true",
     )
 
     screening.add_argument(

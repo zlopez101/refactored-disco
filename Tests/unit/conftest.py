@@ -24,3 +24,22 @@ def sample_symbols(api_setup):
     )  # choose a random value from a normal distribution center on 1 million with std of 10,000
     tickers = get_tickers(api_setup, min_share, max_share, min_volume, quick=True)
     return min_share, max_share, min_volume, tickers
+
+@pytest.fixture(scope='module'):
+def sample_data():
+    """
+    create 3 sample data flows of length 100. 
+    """
+    import pandas as pd
+    from datetime import datetime
+    now = datetime.now()
+    idx = pd.date_range("2020-07-20 8:00", periods=100, freq="T")
+
+    # create with 1 signal
+    
+
+
+    # create with 2 signals
+
+
+    # create with no signals
