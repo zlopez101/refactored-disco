@@ -1,12 +1,16 @@
 import os
 from datetime import datetime
 from itertools import product
+import logging
 
 import numpy as np
 import pandas as pd
 from pytz import timezone
 from ta.momentum import rsi
 from ta.trend import macd_diff, sma_indicator
+from tqdm import tqdm
+
+logging.basicConfig(filename="myclass.log", level=logging.INFO, format="%(message)s")
 
 
 class BaseBackTester:
@@ -31,6 +35,9 @@ class BaseBackTester:
                 and asset.shortable
             ]
             self.symbol = np.random.choice(symbols)
+        elif self.symbol.lower() == "test":
+            return
+
         nyc = timezone("America/New_York")
         start = datetime(2020, 7, 15, 9, 30).astimezone(nyc)
         end = datetime(2020, 7, 15, 16, 0).astimezone(nyc)
@@ -68,7 +75,9 @@ class BaseBackTester:
         assert len(time_period) == 2, "time_period must have a start and and end"
         self._ensure_data_calculation_choice(on_data)
         self.rsi = pd.DataFrame(index=self.data.index)
-        for period in range(time_period[0], time_period[1]):
+        for period in tqdm(
+            range(time_period[0], time_period[1]), desc="Applying RSI parameters"
+        ):
             self.rsi["RSI_" + str(period) + "_period"] = rsi(
                 self.data[on_data], n=period
             )
@@ -113,7 +122,7 @@ class BaseBackTester:
         self.signals = pd.DataFrame(index=self.data.index)
         rsi_check = range(rsi_check[0], rsi_check[1])
         columns = product(self.rsi.columns, self.indicator.columns, rsi_check)
-        for column in columns:
+        for column in tqdm(columns, desc="Checking for positive Trading events"):
             # check if RSI is below certain number
             x = self.rsi[column[0]] < column[2]  # boolean mask
             # do a rolling sum (that would be negative if crossover from the bottom) and a zero check
@@ -169,7 +178,10 @@ class BaseBackTester:
             base_targets = [self.data["close"][key] for key in list(dct.keys())]
             high_targets = [target * h_perc for target in base_targets]
             low_targets = [target * l_perc for target in base_targets]
-            for key, high, low in zip(list(dct.keys()), high_targets, low_targets):
+            for key, high, low in tqdm(
+                zip(list(dct.keys()), high_targets, low_targets),
+                desc="Analyzing Generated Events for Outcomes",
+            ):
                 # slice dataframe for range and check if the highs > high_targets, lows < low_targets
                 # flag setup
                 h_hit, l_hit = False, False
@@ -226,7 +238,7 @@ class BackTestMacd(BaseBackTester):
 
         complete = product(n_fast_range, n_slow_range, n_sign_range)
         self.macd = pd.DataFrame(index=self.data.index)
-        for combo in complete:
+        for combo in tqdm(complete, desc="Creating MACD diff for lines"):
             self.macd[
                 str(combo[0]) + "f_" + str(combo[1]) + "s_" + str(combo[2]) + "sig"
             ] = macd_diff(
@@ -248,6 +260,27 @@ class BackTestMacd(BaseBackTester):
         self.analyze_signals(high, low, window)
         return self.results
 
+    def summary(self, verbose=False):
+        try:
+            _ = self.results
+        except AttributeError:
+            print("Please run the analysis before attempting a summary")
+            return
+
+        for result in self.results:
+            logging.info(f"{self.symbol}, {result}")
+
+        if verbose:
+            print(
+                f"Summary of Backtesting Optimization for {self.symbol}",
+                "\t\t\t\t\t\t",
+                datetime.now().strftime("%Y-%m-%d"),
+            )
+            print("-" * 100)
+            length = len(self.results)
+            print(f"A total of {length} backtests were run on the data.")
+            print("The top ten results are displayed below:")
+
 
 class BackTestSMA(BaseBackTester):
     pass
@@ -255,8 +288,11 @@ class BackTestSMA(BaseBackTester):
 
 # testing
 if __name__ == "__main__":
-    macd_rsi = BackTestMacd("random", (5, 8), (26, 28), (9, 10))
-
-    results = macd_rsi.run([9, 10, 60, 61])
+    macd_rsi = BackTestMacd("random", (6, 7), (26, 30), (9, 11))
+    # macd_rsi.summary(verbose=True)
+    # logging.info("a_message")
+    # logging.info("just in case")
+    results = macd_rsi.run([9, 10, 64, 68])
+    macd_rsi.summary()
     # print([setting for setting, result in results if result > 0])
-    print(results[0])
+    # print(results[0])
