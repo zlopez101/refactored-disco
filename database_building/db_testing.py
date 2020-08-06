@@ -22,10 +22,7 @@ def get_data(symbol):
         symbols = [
             asset.symbol
             for asset in assets
-            if asset.tradable
-            and asset.exchange == "NYSE"
-            and asset.status == "active"
-            and asset.shortable
+            if asset.tradable and asset.status == "active" and asset.shortable
         ]
         symbol = np.random.choice(symbols)
 
@@ -50,3 +47,4 @@ def get_soup():
     soup = BeautifulSoup(r.text, features="html.parser")
 
     return symbol, soup
+
