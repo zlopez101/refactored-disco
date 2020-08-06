@@ -3,6 +3,7 @@ from pytz import timezone
 import pandas as pd
 from datetime import datetime, timedelta
 import alpaca_trade_api as tradeapi
+import time
 
 
 def credentialing(paper=True):
@@ -70,7 +71,7 @@ def lots_of_data(start, symbol):
     now = datetime.now().astimezone(nyc)
     last = data.index[-1]
     while last < now - timedelta(hours=8):
-
+        time.sleep(1)
         new_data, _ = get_data(symbol, last)
         last = data.index[-1]
         data = pd.concat([data, new_data])
